@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Built Simple - Project Setup Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            color: #00FF00;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #00FF00;
+            margin-bottom: 10px;
+            font-size: 2em;
+            text-shadow: 0 0 10px #00FF00;
+        }
+
+        .tagline {
+            color: #008800;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #00FF00;
+            font-weight: bold;
+        }
+
+        textarea, input {
+            width: 100%;
+            background: #111;
+            color: #00FF00;
+            border: 1px solid #00FF00;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        textarea {
+            min-height: 300px;
+            resize: vertical;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #00FF00;
+            box-shadow: 0 0 5px #00FF00;
+        }
+
+        button {
+            background: #00FF00;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 20px 10px 20px 0;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #000;
+            color: #00FF00;
+            border: 2px solid #00FF00;
+        }
+
+        #output {
+            background: #0a0a0a;
+            border: 2px solid #00FF00;
+            padding: 20px;
+            margin-top: 30px;
+            white-space: pre-wrap;
+            display: none;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        #output.show {
+            display: block;
+        }
+
+        .copy-button {
+            background: #008800;
+        }
+
+        .hint {
+            color: #008800;
+            font-size: 0.85em;
+            font-style: italic;
+            margin-top: 5px;
+        }
+
+        .saved-message {
+            color: #00FF00;
+            padding: 10px;
+            border: 1px solid #00FF00;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .saved-message.show {
+            display: block;
+        }
+
+        .step-indicator {
+            background: #111;
+            border: 1px solid #00FF00;
+            padding: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .warning {
+            background: #110500;
+            border: 1px solid #FF0000;
+            color: #FF6666;
+            padding: 10px;
+            margin: 20px 0;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="step-indicator">
+            STEP 2 OF 3: Generate Your Project Instructions
+        </div>
+
+        <h1>PROJECT SETUP GENERATOR</h1>
+        <p class="tagline">Turn your solution into permanent AI project instructions. No manual editing needed.</p>
+
+        <div class="warning">
+            ⚠️ Make sure you saved your solution from Step 1. You'll need it here.
+        </div>
+
+        <form id="projectForm">
+            <div class="section">
+                <label for="solution">Paste Your Complete Solution from Step 1:</label>
+                <textarea id="solution" name="solution" placeholder="Paste everything Claude/ChatGPT told you in Step 1. Include the problem, the solution, tools needed - everything."></textarea>
+                <p class="hint">This should include the problem, solution steps, tools, and reality check from the Solution Architect.</p>
+            </div>
+
+            <div class="section">
+                <label for="ai-platform">Which AI Are You Using?</label>
+                <div style="margin: 10px 0;">
+                    <label style="display: inline-block; margin-right: 20px;">
+                        <input type="radio" name="platform" value="claude" checked> Claude (Recommended)
+                    </label>
+                    <label style="display: inline-block;">
+                        <input type="radio" name="platform" value="chatgpt"> ChatGPT
+                    </label>
+                </div>
+            </div>
+
+            <div class="section">
+                <label for="email">Email for Project Instructions (Optional):</label>
+                <input type="email" id="email" name="email" placeholder="you@example.com">
+                <p class="hint">Get the instructions emailed so you never lose them. We don't spam.</p>
+            </div>
+
+            <button type="button" onclick="generateProjectInstructions()">Generate Project Instructions</button>
+            <button type="button" onclick="loadFromStep1()" style="background: #666;">Load Saved Solution from Step 1</button>
+        </form>
+
+        <div id="saved-message" class="saved-message">
+            ✓ Instructions saved. Copy them to your AI project settings.
+        </div>
+
+        <div id="output">
+            <button onclick="copyToClipboard()" class="copy-button">Copy Project Instructions</button>
+            <button onclick="downloadInstructions()" style="background: #008800;">Download as Text File</button>
+            <div id="prompt-content"></div>
+        </div>
+    </div>
+
+    <script>
+        // Try to load solution from Step 1 automatically
+        window.addEventListener('load', function() {
+            const step1Data = localStorage.getItem('builtsimple-solution');
+            if (step1Data) {
+                try {
+                    const data = JSON.parse(step1Data);
+                    if (data.solution) {
+                        document.getElementById('solution').value = data.solution;
+                        showNotification('✓ Loaded your solution from Step 1');
+                    }
+                } catch(e) {
+                    console.log('No previous solution found');
+                }
+            }
+        });
+
+        function loadFromStep1() {
+            const step1Data = localStorage.getItem('builtsimple-solution');
+            if (step1Data) {
+                try {
+                    const data = JSON.parse(step1Data);
+                    if (data.solution) {
+                        document.getElementById('solution').value = data.solution;
+                        showNotification('✓ Loaded your saved solution');
+                    } else {
+                        alert('No saved solution found. Please complete Step 1 first.');
+                    }
+                } catch(e) {
+                    alert('Error loading saved solution. Please paste it manually.');
+                }
+            } else {
+                alert('No saved solution found. Please complete Step 1 first or paste your solution manually.');
+            }
+        }
+
+        function showNotification(message) {
+            const msg = document.getElementById('saved-message');
+            msg.textContent = message;
+            msg.classList.add('show');
+            setTimeout(() => {
+                msg.classList.remove('show');
+            }, 3000);
+        }
+
+        function generateProjectInstructions() {
+            const solution = document.getElementById('solution').value;
+            const platform = document.querySelector('input[name="platform"]:checked').value;
+            const email = document.getElementById('email').value;
+
+            if (!solution) {
+                alert("Please paste your solution from Step 1");
+                return;
+            }
+
+            const prompt = `I just used the Solution Architect and got this solution for my problem:
+
+${solution}
+
+Now create my permanent project instructions for ${platform === 'claude' ? 'Claude' : 'ChatGPT'} that I'll use for this entire build. 
+
+Generate instructions that include:
+
+1. PROJECT CONTEXT
+- What problem I'm solving
+- What the final solution looks like
+- What tools/services we're using
+- Where this will run when complete
+
+2. BUILD ENVIRONMENT
+- Detect my OS from the solution above
+- List only the tools I'll actually need
+- My technical level (assume copy/paste only)
+- Any accounts/APIs mentioned
+
+3. EXTERNAL SERVICES RESEARCH REQUIREMENT
+- List every external service/API mentioned (Twilio, Stripe, Google Sheets API, etc.)
+- Include instruction: "Before writing code for [service], always say: 'Let me check the current [service] documentation since APIs change frequently. Please verify these steps are still accurate by checking [service website].'"
+- Make me verify current pricing before implementing
+- Warn me if using outdated methods
+
+4. CODING RULES
+- Language we're using (if any)
+- Libraries/dependencies allowed
+- Error handling requirements
+- Testing approach
+- Always use latest syntax/methods after checking
+
+5. OUTPUT STANDARDS
+- How code should be formatted
+- How instructions should be written
+- File naming conventions
+- What to include in every response
+- Flag any code that might be outdated
+
+6. SAFETY RULES
+- What not to assume
+- When to ask questions
+- How to handle uncertainty
+- Warnings for potential issues
+- ALWAYS note: "This code is based on my training data. Verify with current documentation."
+
+Format this as a complete prompt I can copy and paste into my ${platform === 'claude' ? 'Claude Project' : 'ChatGPT Custom Instructions'} that will persist across our entire build conversation.
+
+Make it specific to MY project but universal enough that I don't need to edit anything.
+
+Include this critical instruction: "For any external service integration, remind me to check their current documentation since your knowledge might be outdated."
+
+Start the instructions with: "You are helping me build [specific solution from above]..."`;
+
+            document.getElementById('prompt-content').textContent = prompt;
+            document.getElementById('output').classList.add('show');
+            
+            // Save to localStorage
+            const projectData = {
+                solution: solution,
+                platform: platform,
+                prompt: prompt,
+                email: email,
+                timestamp: new Date().toISOString()
+            };
+            
+            localStorage.setItem('builtsimple-project', JSON.stringify(projectData));
+            
+            // Scroll to output
+            document.getElementById('output').scrollIntoView({ behavior: 'smooth' });
+
+            showNotification('✓ Instructions generated and saved locally');
+
+            // Send to analytics/email if configured
+            if (email) {
+                // Uncomment when you have an endpoint
+                /*
+                fetch('https://your-endpoint.com/save-project', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(projectData)
+                });
+                */
+            }
+        }
+
+        function copyToClipboard() {
+            const promptText = document.getElementById('prompt-content').textContent;
+            navigator.clipboard.writeText(promptText).then(() => {
+                const button = document.querySelector('.copy-button');
+                const originalText = button.textContent;
+                button.textContent = '✓ Copied to Clipboard!';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 2000);
+            });
+        }
+
+        function downloadInstructions() {
+            const promptText = document.getElementById('prompt-content').textContent;
+            const blob = new Blob([promptText], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'project-instructions.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            showNotification('✓ Instructions downloaded');
+        }
+    </script>
+</body>
+</html>
