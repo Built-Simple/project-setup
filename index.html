@@ -153,6 +153,13 @@
 
         <h1>PROJECT SETUP GENERATOR</h1>
         <p class="tagline">Turn your solution into permanent AI project instructions. No manual editing needed.</p>
+        
+        <div style="background: #0a0a0a; border: 1px solid #00FF00; padding: 10px; margin: 20px 0; text-align: center;">
+            <strong>WORKFLOW:</strong> 
+            <a href="https://built-simple.github.io/solution-architect/" style="color: #008800;">Step 1: Solution Architect</a> → 
+            <span style="color: #00FF00;">Step 2: Project Setup</span> → 
+            <a href="https://built-simple.github.io/todo-generator/" style="color: #008800;">Step 3: Todo Generator</a>
+        </div>
 
         <div class="warning">
             ⚠️ Make sure you saved your solution from Step 1. You'll need it here.
@@ -194,6 +201,7 @@
         <div id="output">
             <button onclick="copyToClipboard()" class="copy-button">Copy Project Instructions</button>
             <button onclick="downloadInstructions()" style="background: #008800;">Download as Text File</button>
+            <button onclick="goToStep3()" style="background: #0066FF;">Next: Go to Todo Generator →</button>
             <div id="prompt-content"></div>
         </div>
     </div>
@@ -364,6 +372,10 @@ Start the instructions with: "You are helping me build [specific solution from a
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
             showNotification('✓ Instructions downloaded');
+        }
+
+        function goToStep3() {
+            window.open('https://built-simple.github.io/todo-generator/', '_blank');
         }
     </script>
 </body>
